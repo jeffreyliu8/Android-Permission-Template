@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.location.LocationManager;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -22,7 +23,8 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    TextView textView;
+    private static final String REQUESTED_PERMISSION = Manifest.permission.ACCESS_COARSE_LOCATION;
+    private TextView textView;
 
     final static int MY_PERMISSIONS_REQUEST_READ_WIFI_ACCESS_POINT = 22; // A random number
     WifiManager mWifiManager;
@@ -43,14 +45,37 @@ public class MainActivity extends AppCompatActivity {
 
         textView = (TextView) findViewById(R.id.text);
         AppCompatButton button = (AppCompatButton) findViewById(R.id.button);
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-                registerReceiver(mWifiScanReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
-                mWifiManager.startScan();
-            }
-        });
+        if (button != null) {
+            button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    LocationManager manager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                    if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                        new AlertDialog.Builder(MainActivity.this)
+                                .setMessage("Location is disabled, enable it?")
+                                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                    public void onClick(final DialogInterface dialog, final int id) {
+                                        startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                                    }
+                                })
+                                .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                                    public void onClick(final DialogInterface dialog, final int id) {
+
+                                    }
+                                }).show();
+                    } else {
+                        mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+                        mWifiManager.startScan();
+                    }
+                }
+            });
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(mWifiScanReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
     }
 
     @Override
@@ -62,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
     private void tryGetPermissionAndExecuteTask() {
         // check if we have the permission
         if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_COARSE_LOCATION)
+                REQUESTED_PERMISSION)
                 != PackageManager.PERMISSION_GRANTED) {
 
             // if not, we explain why we need it first
@@ -83,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
     private void showSystemPermissionRequestWindow() {
         // Should we show an explanation?
         if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                Manifest.permission.ACCESS_COARSE_LOCATION)) {
+                REQUESTED_PERMISSION)) {
 
             textView.setText("Got rejected the first time, and now we need this permission again");
             // Show an explanation to the user *asynchronously* -- don't block
@@ -92,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         ActivityCompat.requestPermissions(this,
-                new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+                new String[]{REQUESTED_PERMISSION},
                 MY_PERMISSIONS_REQUEST_READ_WIFI_ACCESS_POINT);
     }
 
