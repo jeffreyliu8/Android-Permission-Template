@@ -2,10 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="javis.wifidetect">
 
-    <!--no danger permission-->
-    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-
     <!--dangerous permission-->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 

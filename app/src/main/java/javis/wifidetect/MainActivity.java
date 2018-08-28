@@ -1,15 +1,11 @@
 package javis.wifidetect;
 
 import android.Manifest;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
-import android.net.wifi.ScanResult;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -19,32 +15,20 @@ import android.support.v7.widget.AppCompatButton;
 import android.view.View;
 import android.widget.TextView;
 
-import java.util.List;
-
 public class MainActivity extends AppCompatActivity {
 
     private static final String REQUESTED_PERMISSION = Manifest.permission.ACCESS_COARSE_LOCATION;
     private TextView textView;
 
-    final static int MY_PERMISSIONS_REQUEST_READ_WIFI_ACCESS_POINT = 22; // A random number
-    WifiManager mWifiManager;
-
-    private BroadcastReceiver mWifiScanReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context c, Intent intent) {
-            if (intent.getAction().equals(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION)) {
-                tryGetPermissionAndExecuteTask();
-            }
-        }
-    };
+    private final static int MY_PERMISSIONS_REQUEST_LOCATION = 22; // A random number
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        textView = (TextView) findViewById(R.id.text);
-        AppCompatButton button = (AppCompatButton) findViewById(R.id.button);
+        textView = findViewById(R.id.text);
+        AppCompatButton button = findViewById(R.id.button);
         if (button != null) {
             button.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -64,24 +48,11 @@ public class MainActivity extends AppCompatActivity {
                                     }
                                 }).show();
                     } else {
-                        mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-                        mWifiManager.startScan();
+                        tryGetPermissionAndExecuteTask();
                     }
                 }
             });
         }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        registerReceiver(mWifiScanReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        unregisterReceiver();
     }
 
     private void tryGetPermissionAndExecuteTask() {
@@ -93,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
             // if not, we explain why we need it first
             new AlertDialog.Builder(this)
                     .setTitle("Explain why we need this permission")
-                    .setMessage("With this permission, we can all the available wifi")
+                    .setMessage("With this permission, we can get locations")
                     .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
                             showSystemPermissionRequestWindow();
@@ -118,14 +89,14 @@ public class MainActivity extends AppCompatActivity {
 
         ActivityCompat.requestPermissions(this,
                 new String[]{REQUESTED_PERMISSION},
-                MY_PERMISSIONS_REQUEST_READ_WIFI_ACCESS_POINT);
+                MY_PERMISSIONS_REQUEST_LOCATION);
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
         switch (requestCode) {
-            case MY_PERMISSIONS_REQUEST_READ_WIFI_ACCESS_POINT: {
+            case MY_PERMISSIONS_REQUEST_LOCATION: {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -149,22 +120,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getAvailableWifiAP() {
-        List<ScanResult> mScanResults = mWifiManager.getScanResults();
-        String result = "";
-        for (int i = 0; i < mScanResults.size(); i++) {
-            result = result + "\ni = " + i + " result is " + mScanResults.get(i).SSID;
-        }
-        textView.setText(result);
-        unregisterReceiver();
-    }
-
-    private void unregisterReceiver() {
-        try {
-            if (mWifiScanReceiver != null) {
-                unregisterReceiver(mWifiScanReceiver);
-            }
-        } catch (IllegalArgumentException e) {
-            mWifiScanReceiver = null;
-        }
+        textView.setText("now we have permission");
     }
 }
